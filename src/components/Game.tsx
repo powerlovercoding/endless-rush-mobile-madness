@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import Player from "./Player";
@@ -39,7 +38,7 @@ const Game: React.FC = () => {
     }));
     
     // Show starting message
-    toast("Run for your life!", {
+    toast("Avoid the falling tiles!", {
       position: "top-center",
       duration: 1500
     });
@@ -75,40 +74,40 @@ const Game: React.FC = () => {
     }
   }, []);
 
-  // Handle player actions
+  // Handle player actions - updated for the new concept
   const handleJump = useCallback(() => {
-    if (gameState.status !== "playing" || gameState.playerState !== "running") return;
+    if (gameState.status !== "playing") return;
     
     setGameState(prev => ({
       ...prev,
       playerState: "jumping"
     }));
     
-    // Reset to running after jump animation
+    // Reset to running after animation
     setTimeout(() => {
       setGameState(prev => ({
         ...prev,
         playerState: "running"
       }));
-    }, 700);
-  }, [gameState.status, gameState.playerState]);
+    }, 500);
+  }, [gameState.status]);
 
   const handleSlide = useCallback(() => {
-    if (gameState.status !== "playing" || gameState.playerState !== "running") return;
+    if (gameState.status !== "playing") return;
     
     setGameState(prev => ({
       ...prev,
       playerState: "sliding"
     }));
     
-    // Reset to running after slide animation
+    // Reset to running after animation
     setTimeout(() => {
       setGameState(prev => ({
         ...prev,
         playerState: "running"
       }));
-    }, 700);
-  }, [gameState.status, gameState.playerState]);
+    }, 500);
+  }, [gameState.status]);
 
   const handleMoveLeft = useCallback(() => {
     if (gameState.status !== "playing") return;
@@ -130,7 +129,7 @@ const Game: React.FC = () => {
     }));
   }, [gameState.status]);
 
-  // Generate new obstacles
+  // Generate new obstacles - updated for falling from top
   const generateObstacle = useCallback(() => {
     if (gameState.status !== "playing") return;
     
@@ -138,7 +137,7 @@ const Game: React.FC = () => {
       id: Date.now(),
       type: getRandomObstacleType(),
       position: getRandomPosition(),
-      distance: 100, // Start from right edge (100%)
+      distance: -10, // Start from above the screen
       speed: gameState.speed
     };
     
@@ -173,7 +172,7 @@ const Game: React.FC = () => {
     });
   }, [gameState.status]);
 
-  // Game loop
+  // Game loop - updated for obstacles falling from top
   const gameLoop = useCallback(() => {
     if (gameState.status !== "playing") return;
     
@@ -181,13 +180,13 @@ const Game: React.FC = () => {
       // Update score
       const newScore = prev.score + 1;
       
-      // Move obstacles
+      // Move obstacles from top to bottom
       const updatedObstacles = prev.obstacles
         .map(obstacle => ({
           ...obstacle,
-          distance: obstacle.distance - prev.speed * 0.3
+          distance: obstacle.distance + prev.speed * 0.3
         }))
-        .filter(obstacle => obstacle.distance > -20); // Remove obstacles that are off-screen
+        .filter(obstacle => obstacle.distance < 110); // Remove obstacles that are off-screen at bottom
       
       // Check for collisions
       const collision = prev.isInvulnerable ? false : prev.obstacles.some(obstacle => 
@@ -285,10 +284,10 @@ const Game: React.FC = () => {
       {gameState.status === "ready" && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-30">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-white mb-4">Endless Rush</h1>
-            <p className="text-xl text-game-light mb-2">Swipe to control:</p>
+            <h1 className="text-4xl font-bold text-white mb-4">Color Tiles</h1>
+            <p className="text-xl text-game-light mb-2">Avoid the falling tiles!</p>
             <p className="text-md text-white/70 mb-8">
-              ↑ Jump | ↓ Slide | ← → Move
+              ↑ Shrink | ↓ Grow | ← → Move
             </p>
             <Button 
               onClick={startGame}

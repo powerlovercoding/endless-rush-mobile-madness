@@ -101,11 +101,11 @@ const GameControls: React.FC<GameControlsProps> = ({
     <div className="control-area">
       <div className="text-white/70 text-center pb-4">
         <div className="grid grid-cols-3 gap-2 text-sm">
-          <div className="text-center">← Swipe Left</div>
-          <div className="text-center">↑ Swipe Up</div>
-          <div className="text-center">→ Swipe Right</div>
+          <div className="text-center">← Move Left</div>
+          <div className="text-center">↑ Shrink</div>
+          <div className="text-center">→ Move Right</div>
         </div>
-        <div className="text-center mt-1">↓ Swipe Down</div>
+        <div className="text-center mt-1">↓ Grow</div>
       </div>
     </div>
   );

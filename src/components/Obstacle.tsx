@@ -14,7 +14,7 @@ const Obstacle: React.FC<ObstacleProps> = ({ type, position, distance }) => {
   // Style based on obstacle type
   const getObstacleStyle = () => {
     const baseStyle = {
-      right: `${distance}%`,
+      top: `${distance}%`, // Now coming from top instead of right
     };
     
     switch (type) {
@@ -23,28 +23,24 @@ const Obstacle: React.FC<ObstacleProps> = ({ type, position, distance }) => {
           ...baseStyle,
           height: "40px",
           width: "40px",
-          bottom: "20px",
         };
       case "tall":
         return {
           ...baseStyle,
-          height: "80px",
-          width: "40px",
-          bottom: "20px",
+          height: "40px", 
+          width: "80px", // Wider for the piano-like effect
         };
       case "wide":
         return {
           ...baseStyle,
-          height: "20px",
+          height: "40px",
           width: "80px",
-          bottom: "20px",
         };
       case "flying":
         return {
           ...baseStyle,
-          height: "30px",
-          width: "30px",
-          bottom: "60px", // Higher up to represent flying obstacle
+          height: "40px",
+          width: "60px",
         };
       default:
         return baseStyle;
@@ -69,7 +65,7 @@ const Obstacle: React.FC<ObstacleProps> = ({ type, position, distance }) => {
 
   return (
     <div
-      className={`obstacle absolute ${getLanePosition(position)} ${getObstacleColor()}`}
+      className={`obstacle absolute ${getLanePosition(position)} ${getObstacleColor()} rounded-md`}
       style={getObstacleStyle()}
     />
   );

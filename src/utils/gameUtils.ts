@@ -63,25 +63,27 @@ export const formatScore = (score: number): string => {
   return score.toString().padStart(5, '0');
 };
 
-// Check collision between player and obstacle
+// Check collision between player and falling obstacle
 export const checkCollision = (
   playerPosition: Position,
   playerState: PlayerState,
   obstacle: Obstacle
 ): boolean => {
-  if (obstacle.distance > 10 && obstacle.distance < 25) {
+  // Check if obstacle is in collision zone (near the bottom of the screen)
+  if (obstacle.distance > 80 && obstacle.distance < 110) {
     // Same lane collision check
     if (playerPosition === obstacle.position) {
-      // Type-specific collision checks
+      // For our piano-like game, smaller player (jumping state) can avoid wide obstacles
+      // Larger player (sliding state) can't fit through any obstacles
       switch (obstacle.type) {
         case "standard":
-          return playerState !== "sliding" && playerState !== "jumping";
+          return playerState !== "jumping"; // Can dodge if small
         case "tall":
-          return true; // Always collides (must be avoided by changing lanes)
+          return true; // Can't dodge these
         case "wide":
-          return playerState !== "jumping";
+          return playerState !== "jumping"; // Can dodge if small
         case "flying":
-          return playerState !== "sliding";
+          return playerState === "sliding"; // Can't dodge if big
         default:
           return true;
       }

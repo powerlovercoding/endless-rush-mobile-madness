@@ -14,10 +14,10 @@ const Player: React.FC<PlayerProps> = ({ position, playerState }) => {
   useEffect(() => {
     switch (playerState) {
       case "jumping":
-        setAnimationClass("animate-bounce");
+        setAnimationClass("scale-90");
         break;
       case "sliding":
-        setAnimationClass("scale-y-50 -translate-y-4");
+        setAnimationClass("scale-110");
         break;
       default:
         setAnimationClass("");
@@ -26,8 +26,8 @@ const Player: React.FC<PlayerProps> = ({ position, playerState }) => {
 
   return (
     <div 
-      className={`player ${getLanePosition(position)} ${animationClass} h-16 w-12`}
-      style={{ bottom: "20px" }}
+      className={`player ${getLanePosition(position)} ${animationClass} h-16 w-12 transition-all duration-200`}
+      style={{ bottom: "100px" }}
     >
       <div className="bg-game-light w-full h-full rounded-lg flex items-center justify-center">
         <div className="bg-game-secondary w-8 h-10 rounded-full">
@@ -36,12 +36,7 @@ const Player: React.FC<PlayerProps> = ({ position, playerState }) => {
             <div className="w-2 h-2 bg-white rounded-full"></div>
             <div className="w-2 h-2 bg-white rounded-full"></div>
           </div>
-          {playerState !== "sliding" && (
-            <div className="w-4 h-1 bg-white mx-auto mt-2 rounded-full"></div>
-          )}
-          {playerState === "sliding" && (
-            <div className="w-4 h-1 bg-white mx-auto mt-0 rounded-full"></div>
-          )}
+          <div className="w-4 h-1 bg-white mx-auto mt-2 rounded-full"></div>
         </div>
       </div>
     </div>
