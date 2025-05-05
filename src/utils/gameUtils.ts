@@ -91,4 +91,3 @@ export const shouldIncreaseSpeed = (lastSpeedUpTime: number): boolean => {
   // Speed up every 20 seconds (20000 milliseconds)
   return Date.now() - lastSpeedUpTime >= 20000;
 };
-
