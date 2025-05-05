@@ -48,21 +48,21 @@ const Obstacle: React.FC<ObstacleProps> = ({ type, position, distance, touched }
     }
   };
 
-  // Color based on obstacle type with pulsing animation for untouched tiles
+  // Color based on obstacle type - removed pulsing animation and opacity reduction
   const getObstacleColor = () => {
-    const baseClass = touched ? "opacity-30" : "animate-pulse";
-    
+    // Removed the baseClass with pulsing animation
+    // Now tiles remain fully visible until they disappear
     switch (type) {
       case "standard":
-        return `bg-game-obstacle ${baseClass}`;
+        return touched ? "bg-game-obstacle opacity-30" : "bg-game-obstacle";
       case "tall":
-        return `bg-game-danger ${baseClass}`;
+        return touched ? "bg-game-danger opacity-30" : "bg-game-danger";
       case "wide":
-        return `bg-game-tertiary ${baseClass}`;
+        return touched ? "bg-game-tertiary opacity-30" : "bg-game-tertiary";
       case "flying":
-        return `bg-amber-400 ${baseClass}`;
+        return touched ? "bg-amber-400 opacity-30" : "bg-amber-400";
       default:
-        return `bg-game-obstacle ${baseClass}`;
+        return touched ? "bg-game-obstacle opacity-30" : "bg-game-obstacle";
     }
   };
 

@@ -14,8 +14,6 @@ import {
   getRandomObstacleType,
   getRandomPosition,
   checkCollision,
-  shouldIncreaseDifficulty,
-  calculateSpeed,
   calculateObstacleRate
 } from "../utils/gameUtils";
 
@@ -23,7 +21,6 @@ const Game: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>({...INITIAL_GAME_STATE});
   const gameLoopRef = useRef<number | null>(null);
   const obstacleGeneratorRef = useRef<NodeJS.Timeout | null>(null);
-  const difficultyTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Reset game state to initial values
   const resetGame = useCallback(() => {
@@ -67,11 +64,6 @@ const Game: React.FC = () => {
     if (obstacleGeneratorRef.current) {
       clearInterval(obstacleGeneratorRef.current);
       obstacleGeneratorRef.current = null;
-    }
-    
-    if (difficultyTimerRef.current) {
-      clearInterval(difficultyTimerRef.current);
-      difficultyTimerRef.current = null;
     }
   }, []);
 
@@ -149,31 +141,6 @@ const Game: React.FC = () => {
     }));
   }, [gameState.status, gameState.speed]);
 
-  // Update difficulty
-  const updateDifficulty = useCallback(() => {
-    if (gameState.status !== "playing") return;
-    
-    setGameState(prev => {
-      if (shouldIncreaseDifficulty(prev.score, prev.lastDifficultyChange)) {
-        const newLevel = prev.difficultyLevel + 1;
-        
-        // Show difficulty increase message
-        toast(`Difficulty Increased: Level ${newLevel}!`, {
-          position: "top-center",
-          duration: 2000
-        });
-        
-        return {
-          ...prev,
-          difficultyLevel: newLevel,
-          speed: calculateSpeed(newLevel),
-          lastDifficultyChange: prev.score
-        };
-      }
-      return prev;
-    });
-  }, [gameState.status]);
-
   // Game loop - updated for touching tiles instead of avoiding them
   const gameLoop = useCallback(() => {
     if (gameState.status !== "playing") return;
@@ -197,10 +164,10 @@ const Game: React.FC = () => {
           scoreBonus += 10;
         }
         
-        // Move obstacle down
+        // Move obstacle down - slowed down the rate by using a smaller speed multiplier
         return {
           ...obstacle,
-          distance: obstacle.distance + prev.speed * 0.3,
+          distance: obstacle.distance + prev.speed * 0.2, // Reduced from 0.3 to 0.2 for slower descent
           touched: obstacle.touched || isTouched
         };
       });
@@ -238,28 +205,15 @@ const Game: React.FC = () => {
       // Start game loop
       gameLoopRef.current = requestAnimationFrame(gameLoop);
       
-      // Start obstacle generator
-      obstacleGeneratorRef.current = setInterval(
-        generateObstacle, 
-        calculateObstacleRate(gameState.difficultyLevel)
-      );
-      
-      // Start difficulty timer check
-      difficultyTimerRef.current = setInterval(updateDifficulty, 3000);
+      // Start obstacle generator with fixed rate
+      obstacleGeneratorRef.current = setInterval(generateObstacle, calculateObstacleRate());
     }
     
     return () => {
       if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
       if (obstacleGeneratorRef.current) clearInterval(obstacleGeneratorRef.current);
-      if (difficultyTimerRef.current) clearInterval(difficultyTimerRef.current);
     };
-  }, [
-    gameState.status, 
-    gameState.difficultyLevel, 
-    gameLoop, 
-    generateObstacle, 
-    updateDifficulty
-  ]);
+  }, [gameState.status, gameLoop, generateObstacle]);
 
   return (
     <div className="game-container">

@@ -20,20 +20,16 @@ export interface GameState {
   playerPosition: Position;
   playerState: PlayerState;
   obstacles: Obstacle[];
-  difficultyLevel: number;
-  lastDifficultyChange: number;
   isInvulnerable: boolean;
 }
 
 export const INITIAL_GAME_STATE: GameState = {
   status: "ready",
   score: 0,
-  speed: 5,
+  speed: 2, // Reduced base speed from 5 to 2 to make obstacles come down slower
   playerPosition: "center",
   playerState: "running",
   obstacles: [],
-  difficultyLevel: 1,
-  lastDifficultyChange: 0,
   isInvulnerable: false
 };
 
@@ -80,21 +76,7 @@ export const checkCollision = (
   return false;
 };
 
-// Calculate difficulty increase
-export const shouldIncreaseDifficulty = (
-  score: number,
-  lastDifficultyChange: number
-): boolean => {
-  // Increase difficulty every 3 minutes (roughly 180 points)
-  return score - lastDifficultyChange >= 180;
-};
-
-// Calculate speed based on difficulty level
-export const calculateSpeed = (difficultyLevel: number): number => {
-  return 5 + (difficultyLevel - 1) * 2;
-};
-
-// Calculate obstacle generation rate based on difficulty
-export const calculateObstacleRate = (difficultyLevel: number): number => {
-  return Math.max(1500 - (difficultyLevel - 1) * 200, 600);
+// Calculate obstacle generation rate - fixed rate without difficulty scaling
+export const calculateObstacleRate = (): number => {
+  return 1800; // Slower fixed rate for obstacle generation (1.8 seconds between obstacles)
 };
