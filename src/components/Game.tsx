@@ -14,7 +14,8 @@ import {
   getRandomObstacleType,
   getRandomPosition,
   checkCollision,
-  calculateObstacleRate
+  calculateObstacleRate,
+  shouldIncreaseSpeed
 } from "../utils/gameUtils";
 
 const Game: React.FC = () => {
@@ -32,7 +33,8 @@ const Game: React.FC = () => {
     resetGame();
     setGameState(prev => ({
       ...prev,
-      status: "playing"
+      status: "playing",
+      lastSpeedUpTime: Date.now() // Initialize the speed up timer when starting
     }));
     
     // Show starting message
@@ -132,7 +134,7 @@ const Game: React.FC = () => {
       position: getRandomPosition(),
       distance: -10, // Start from above the screen
       speed: gameState.speed,
-      touched: false // Add touched property initialized to false
+      touched: false
     };
     
     setGameState(prev => ({
@@ -141,7 +143,7 @@ const Game: React.FC = () => {
     }));
   }, [gameState.status, gameState.speed]);
 
-  // Game loop - updated for consistent scoring and missed tiles tracking
+  // Game loop - updated to handle speed increase and touch effects
   const gameLoop = useCallback(() => {
     if (gameState.status !== "playing") return;
     
@@ -167,7 +169,8 @@ const Game: React.FC = () => {
         return {
           ...obstacle,
           distance: obstacle.distance + prev.speed * 0.2, // Very slow descent
-          touched: obstacle.touched || isTouched
+          touched: obstacle.touched || isTouched,
+          touchEffect: isTouched ? true : obstacle.touchEffect // Set touch effect on touch
         };
       });
       
@@ -182,6 +185,23 @@ const Game: React.FC = () => {
       // Update the missed tiles counter
       const newMissedTiles = prev.missedTiles + missedInThisFrame;
       
+      // Check if we should increase speed (every 20 seconds)
+      let newSpeed = prev.speed;
+      let newLastSpeedUpTime = prev.lastSpeedUpTime;
+      
+      if (shouldIncreaseSpeed(prev.lastSpeedUpTime)) {
+        newSpeed = prev.speed * 1.15; // Increase speed by 15%
+        newLastSpeedUpTime = Date.now(); // Reset timer
+        
+        // Notify the player of speed increase
+        setTimeout(() => {
+          toast("Speed increased!", {
+            position: "top-center",
+            duration: 1000
+          });
+        }, 0);
+      }
+      
       // End game if too many tiles were missed (20 tiles)
       if (newMissedTiles >= 20) {
         setTimeout(endGame, 0);
@@ -192,7 +212,9 @@ const Game: React.FC = () => {
         ...prev,
         obstacles: filteredObstacles,
         score: prev.score + touchedInThisFrame,
-        missedTiles: newMissedTiles
+        missedTiles: newMissedTiles,
+        speed: newSpeed,
+        lastSpeedUpTime: newLastSpeedUpTime
       };
     });
     

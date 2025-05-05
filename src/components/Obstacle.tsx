@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { ObstacleType, Position, getLanePosition } from "../utils/gameUtils";
 
 interface ObstacleProps {
@@ -8,10 +8,26 @@ interface ObstacleProps {
   position: Position;
   distance: number;
   speed: number;
-  touched: boolean; // New prop to track if obstacle has been touched
+  touched: boolean;
+  touchEffect?: boolean; // New prop to handle touch effect
 }
 
-const Obstacle: React.FC<ObstacleProps> = ({ type, position, distance, touched }) => {
+const Obstacle: React.FC<ObstacleProps> = ({ type, position, distance, touched, touchEffect }) => {
+  const [showEffect, setShowEffect] = useState(false);
+
+  // Handle touch effect animation
+  useEffect(() => {
+    if (touchEffect) {
+      setShowEffect(true);
+      // Reset touch effect after animation completes
+      const timer = setTimeout(() => {
+        setShowEffect(false);
+      }, 300); // 300ms animation duration
+      
+      return () => clearTimeout(timer);
+    }
+  }, [touchEffect]);
+
   // Style based on obstacle type
   const getObstacleStyle = () => {
     const baseStyle = {
@@ -48,27 +64,28 @@ const Obstacle: React.FC<ObstacleProps> = ({ type, position, distance, touched }
     }
   };
 
-  // Color based on obstacle type - removed pulsing animation and opacity reduction
+  // Color based on obstacle type and touch state
   const getObstacleColor = () => {
-    // Removed the baseClass with pulsing animation
-    // Now tiles remain fully visible until they disappear
+    // Base classes including potential touch effect
+    const touchClass = showEffect ? "ring-4 ring-white scale-110" : "";
+    
     switch (type) {
       case "standard":
-        return touched ? "bg-game-obstacle opacity-30" : "bg-game-obstacle";
+        return `${touched ? "bg-game-obstacle opacity-30" : "bg-game-obstacle"} ${touchClass}`;
       case "tall":
-        return touched ? "bg-game-danger opacity-30" : "bg-game-danger";
+        return `${touched ? "bg-game-danger opacity-30" : "bg-game-danger"} ${touchClass}`;
       case "wide":
-        return touched ? "bg-game-tertiary opacity-30" : "bg-game-tertiary";
+        return `${touched ? "bg-game-tertiary opacity-30" : "bg-game-tertiary"} ${touchClass}`;
       case "flying":
-        return touched ? "bg-amber-400 opacity-30" : "bg-amber-400";
+        return `${touched ? "bg-amber-400 opacity-30" : "bg-amber-400"} ${touchClass}`;
       default:
-        return touched ? "bg-game-obstacle opacity-30" : "bg-game-obstacle";
+        return `${touched ? "bg-game-obstacle opacity-30" : "bg-game-obstacle"} ${touchClass}`;
     }
   };
 
   return (
     <div
-      className={`obstacle absolute ${getLanePosition(position)} ${getObstacleColor()} rounded-md`}
+      className={`obstacle absolute ${getLanePosition(position)} ${getObstacleColor()} rounded-md transition-all duration-300`}
       style={getObstacleStyle()}
     />
   );

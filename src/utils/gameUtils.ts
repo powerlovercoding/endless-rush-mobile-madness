@@ -11,28 +11,31 @@ export interface Obstacle {
   distance: number;
   speed: number;
   touched: boolean;
+  touchEffect?: boolean; // Add new property for touch effect animation
 }
 
 export interface GameState {
   status: GameStatus;
   score: number;
-  missedTiles: number; // New counter for missed tiles
+  missedTiles: number;
   speed: number;
   playerPosition: Position;
   playerState: PlayerState;
   obstacles: Obstacle[];
   isInvulnerable: boolean;
+  lastSpeedUpTime: number; // Add timestamp for last speed increase
 }
 
 export const INITIAL_GAME_STATE: GameState = {
   status: "ready",
   score: 0,
-  missedTiles: 0, // Initialize missed tiles counter
-  speed: 1, // Reduced base speed to make obstacles come down very slowly
+  missedTiles: 0,
+  speed: 1,
   playerPosition: "center",
   playerState: "running",
   obstacles: [],
-  isInvulnerable: false
+  isInvulnerable: false,
+  lastSpeedUpTime: 0 // Initialize with 0
 };
 
 // Calculate position for lane
@@ -80,5 +83,12 @@ export const checkCollision = (
 
 // Calculate obstacle generation rate - very slow fixed rate
 export const calculateObstacleRate = (): number => {
-  return 3000; // Slower fixed rate for obstacle generation (3 seconds between obstacles)
+  return 3000; // Keep the slower fixed rate for obstacle generation (3 seconds between obstacles)
 };
+
+// New function to check if speed should increase
+export const shouldIncreaseSpeed = (lastSpeedUpTime: number): boolean => {
+  // Speed up every 20 seconds (20000 milliseconds)
+  return Date.now() - lastSpeedUpTime >= 20000;
+};
+
