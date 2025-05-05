@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import Player from "./Player";
@@ -38,7 +39,7 @@ const Game: React.FC = () => {
     }));
     
     // Show starting message
-    toast("Avoid the falling tiles!", {
+    toast("Touch the falling tiles!", {
       position: "top-center",
       duration: 1500
     });
@@ -74,7 +75,7 @@ const Game: React.FC = () => {
     }
   }, []);
 
-  // Handle player actions - updated for the new concept
+  // Handle player actions
   const handleJump = useCallback(() => {
     if (gameState.status !== "playing") return;
     
@@ -138,7 +139,8 @@ const Game: React.FC = () => {
       type: getRandomObstacleType(),
       position: getRandomPosition(),
       distance: -10, // Start from above the screen
-      speed: gameState.speed
+      speed: gameState.speed,
+      touched: false // Add touched property initialized to false
     };
     
     setGameState(prev => ({
@@ -172,41 +174,58 @@ const Game: React.FC = () => {
     });
   }, [gameState.status]);
 
-  // Game loop - updated for obstacles falling from top
+  // Game loop - updated for touching tiles instead of avoiding them
   const gameLoop = useCallback(() => {
     if (gameState.status !== "playing") return;
     
     setGameState(prev => {
-      // Update score
+      // Update score (only for basic time survived)
       const newScore = prev.score + 1;
       
-      // Move obstacles from top to bottom
-      const updatedObstacles = prev.obstacles
-        .map(obstacle => ({
+      // Process obstacles and check for collisions (which now means successful touches)
+      let scoreBonus = 0;
+      const updatedObstacles = prev.obstacles.map(obstacle => {
+        // Check if this obstacle is being touched now
+        const isTouched = 
+          !obstacle.touched && // Only count first touch
+          obstacle.distance > 80 && // Must be near bottom of screen
+          obstacle.distance < 110 && // Must be near bottom of screen
+          obstacle.position === prev.playerPosition; // Must be in same lane
+        
+        if (isTouched) {
+          // Add points when touching an obstacle
+          scoreBonus += 10;
+        }
+        
+        // Move obstacle down
+        return {
           ...obstacle,
-          distance: obstacle.distance + prev.speed * 0.3
-        }))
-        .filter(obstacle => obstacle.distance < 110); // Remove obstacles that are off-screen at bottom
+          distance: obstacle.distance + prev.speed * 0.3,
+          touched: obstacle.touched || isTouched
+        };
+      });
       
-      // Check for collisions
-      const collision = prev.isInvulnerable ? false : prev.obstacles.some(obstacle => 
-        checkCollision(prev.playerPosition, prev.playerState, obstacle)
-      );
+      // Remove obstacles that are off-screen at bottom
+      const filteredObstacles = updatedObstacles.filter(obstacle => obstacle.distance < 110);
       
-      if (collision) {
-        // End game on collision
+      // Count missed tiles (tiles that went offscreen without being touched)
+      const missedTiles = prev.obstacles.length - updatedObstacles.length - 
+        (updatedObstacles.filter(o => o.distance >= 110 && o.touched).length);
+      
+      // End game if too many tiles were missed
+      if (missedTiles >= 5) {
         setTimeout(endGame, 0);
         return {
           ...prev,
-          obstacles: updatedObstacles,
-          score: newScore
+          obstacles: filteredObstacles,
+          score: newScore + scoreBonus
         };
       }
       
       return {
         ...prev,
-        obstacles: updatedObstacles,
-        score: newScore
+        obstacles: filteredObstacles,
+        score: newScore + scoreBonus
       };
     });
     
@@ -269,6 +288,7 @@ const Game: React.FC = () => {
           position={obstacle.position}
           distance={obstacle.distance}
           speed={obstacle.speed}
+          touched={obstacle.touched}
         />
       ))}
       
@@ -285,7 +305,7 @@ const Game: React.FC = () => {
         <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-30">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-white mb-4">Color Tiles</h1>
-            <p className="text-xl text-game-light mb-2">Avoid the falling tiles!</p>
+            <p className="text-xl text-game-light mb-2">Touch the falling tiles!</p>
             <p className="text-md text-white/70 mb-8">
               ↑ Shrink | ↓ Grow | ← → Move
             </p>

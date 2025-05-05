@@ -10,6 +10,7 @@ export interface Obstacle {
   position: Position;
   distance: number;
   speed: number;
+  touched: boolean;
 }
 
 export interface GameState {
@@ -73,20 +74,7 @@ export const checkCollision = (
   if (obstacle.distance > 80 && obstacle.distance < 110) {
     // Same lane collision check
     if (playerPosition === obstacle.position) {
-      // For our piano-like game, smaller player (jumping state) can avoid wide obstacles
-      // Larger player (sliding state) can't fit through any obstacles
-      switch (obstacle.type) {
-        case "standard":
-          return playerState !== "jumping"; // Can dodge if small
-        case "tall":
-          return true; // Can't dodge these
-        case "wide":
-          return playerState !== "jumping"; // Can dodge if small
-        case "flying":
-          return playerState === "sliding"; // Can't dodge if big
-        default:
-          return true;
-      }
+      return true; // Player is touching the obstacle
     }
   }
   return false;

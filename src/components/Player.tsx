@@ -27,7 +27,7 @@ const Player: React.FC<PlayerProps> = ({ position, playerState }) => {
   return (
     <div 
       className={`player ${getLanePosition(position)} ${animationClass} h-16 w-12 transition-all duration-200`}
-      style={{ bottom: "100px" }}
+      style={{ bottom: "20px" }} // Moved player closer to bottom of screen
     >
       <div className="bg-game-light w-full h-full rounded-lg flex items-center justify-center">
         <div className="bg-game-secondary w-8 h-10 rounded-full">

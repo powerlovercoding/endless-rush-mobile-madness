@@ -8,13 +8,14 @@ interface ObstacleProps {
   position: Position;
   distance: number;
   speed: number;
+  touched: boolean; // New prop to track if obstacle has been touched
 }
 
-const Obstacle: React.FC<ObstacleProps> = ({ type, position, distance }) => {
+const Obstacle: React.FC<ObstacleProps> = ({ type, position, distance, touched }) => {
   // Style based on obstacle type
   const getObstacleStyle = () => {
     const baseStyle = {
-      top: `${distance}%`, // Now coming from top instead of right
+      top: `${distance}%`,
     };
     
     switch (type) {
@@ -28,7 +29,7 @@ const Obstacle: React.FC<ObstacleProps> = ({ type, position, distance }) => {
         return {
           ...baseStyle,
           height: "40px", 
-          width: "80px", // Wider for the piano-like effect
+          width: "80px",
         };
       case "wide":
         return {
@@ -47,19 +48,21 @@ const Obstacle: React.FC<ObstacleProps> = ({ type, position, distance }) => {
     }
   };
 
-  // Color based on obstacle type
+  // Color based on obstacle type with pulsing animation for untouched tiles
   const getObstacleColor = () => {
+    const baseClass = touched ? "opacity-30" : "animate-pulse";
+    
     switch (type) {
       case "standard":
-        return "bg-game-obstacle";
+        return `bg-game-obstacle ${baseClass}`;
       case "tall":
-        return "bg-game-danger";
+        return `bg-game-danger ${baseClass}`;
       case "wide":
-        return "bg-game-tertiary";
+        return `bg-game-tertiary ${baseClass}`;
       case "flying":
-        return "bg-amber-400";
+        return `bg-amber-400 ${baseClass}`;
       default:
-        return "bg-game-obstacle";
+        return `bg-game-obstacle ${baseClass}`;
     }
   };
 
