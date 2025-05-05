@@ -33,7 +33,7 @@ const GameControls: React.FC<GameControlsProps> = ({
     const handleTouchEnd = () => {
       const diffY = touchStartY - touchEndY;
       const diffX = touchStartX - touchEndX;
-      const minSwipeDistance = 50; // Minimum swipe distance in pixels
+      const minSwipeDistance = 30; // Reduced for better responsiveness
       
       // Determine if it's a horizontal or vertical swipe
       if (Math.abs(diffY) > Math.abs(diffX)) {
@@ -63,8 +63,8 @@ const GameControls: React.FC<GameControlsProps> = ({
       touchEndX = 0;
     };
     
-    document.addEventListener('touchstart', handleTouchStart, { passive: false });
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
     document.addEventListener('touchend', handleTouchEnd);
     
     // For testing on desktop
@@ -99,8 +99,13 @@ const GameControls: React.FC<GameControlsProps> = ({
   
   return (
     <div className="control-area">
-      <div className="text-white/30 text-center pb-10">
-        <p className="text-sm">Swipe to control</p>
+      <div className="text-white/70 text-center pb-4">
+        <div className="grid grid-cols-3 gap-2 text-sm">
+          <div className="text-center">← Swipe Left</div>
+          <div className="text-center">↑ Swipe Up</div>
+          <div className="text-center">→ Swipe Right</div>
+        </div>
+        <div className="text-center mt-1">↓ Swipe Down</div>
       </div>
     </div>
   );
