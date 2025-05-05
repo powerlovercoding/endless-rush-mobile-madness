@@ -3,24 +3,360 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>endless-rush-mobile-madness</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+    <title>Neon Runner</title>
+    <script src="https://unpkg.com/@farcade/game-sdk@latest/dist/index.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: #000;
+        font-family: 'Arial', sans-serif;
+      }
 
-    <meta property="og:title" content="endless-rush-mobile-madness" />
-    <meta property="og:description" content="Lovable Generated Project" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+      .emulator-frame {
+        position: relative;
+        width: 100%;
+        max-width: 400px;
+        background: #1a1a1a;
+        border-radius: 10px;
+        padding: 1px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+      .emulator-header {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 6px;
+        color: white;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      p {
+        margin: 0;
+      }
+
+      .game-container {
+        position: relative;
+        width: 100%;
+        padding-top: 160%;
+        background: #000;
+        overflow: hidden;
+        border-radius: 0 0 10px 0;
+      }
+
+      #gameCanvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        border-radius: 0 0 10px 0;
+      }
+
+      #ui {
+        position: absolute;
+        top: 20px;
+        width: 100%;
+        text-align: center;
+        color: #0ff;
+        font-family: 'Arial', sans-serif;
+        font-size: 24px;
+        text-shadow: 0 0 10px #0ff;
+        z-index: 2;
+      }
+
+      .screen {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.9);
+        color: #0ff;
+        text-align: center;
+        padding: 20px;
+        width: 80%;
+        border-radius: 10px;
+        z-index: 3;
+        border: 2px solid #0ff;
+        text-shadow: 0 0 10px #0ff;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+      }
+
+      .touch-controls {
+        position: absolute;
+        bottom: 40px;
+        width: 100%;
+        display: none;
+        justify-content: center;
+        gap: 40px;
+        z-index: 2;
+      }
+
+      .touch-btn {
+        width: 60px;
+        height: 60px;
+        background: rgba(0, 255, 255, 0.2);
+        border: 2px solid #0ff;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #0ff;
+      }
+
+      @media (max-width: 768px) {
+        .touch-controls {
+          display: flex;
+        }
+      }
+    </style>
   </head>
-
   <body>
-    <div id="root"></div>
-    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
-    <script type="module" src="/src/main.tsx"></script>
+    <div class="emulator-frame">
+      <div class="emulator-header">
+        <div>Farcade</div>
+        <p style="font-size: 12px; color: #888">Mini App</p>
+      </div>
+      <div class="game-container">
+        <div id="ui">Score: <span id="score">0</span></div>
+        <canvas id="gameCanvas"></canvas>
+        <div id="startScreen" class="screen">
+          <h1>NEON RUNNER</h1>
+          <p>Avoid the walls!</p>
+          <p>← → to move</p>
+          <p>Press Space to Start</p>
+        </div>
+        <div id="gameOverScreen" class="screen" style="display: none">
+          <h1>GAME OVER</h1>
+          <p>Score: <span id="finalScore">0</span></p>
+          <p>Press Space to Restart</p>
+        </div>
+        <div class="touch-controls">
+          <div id="touchLeft" class="touch-btn"></div>
+          <div id="touchRight" class="touch-btn"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById('gameCanvas')
+      const ctx = canvas.getContext('2d')
+      const startScreen = document.getElementById('startScreen')
+      const gameOverScreen = document.getElementById('gameOverScreen')
+      const scoreDisplay = document.getElementById('score')
+      const finalScoreDisplay = document.getElementById('finalScore')
+
+      // Set canvas size (5:8 aspect ratio)
+      canvas.width = 500
+      canvas.height = 800
+
+      let gameState = 'start'
+      let score = 0
+      let speed = 5
+      let walls = []
+
+      class Player {
+        constructor() {
+          this.width = 20
+          this.height = 20
+          this.x = canvas.width / 2 - this.width / 2
+          this.y = canvas.height - 100
+          this.speed = 6
+          this.trail = []
+          this.maxTrailLength = 10
+        }
+
+        update() {
+          if (keys['ArrowLeft'] || keys['a']) this.x -= this.speed
+          if (keys['ArrowRight'] || keys['d']) this.x += this.speed
+
+          this.x = Math.max(0, Math.min(canvas.width - this.width, this.x))
+
+          // Update trail
+          this.trail.unshift({ x: this.x, y: this.y })
+          if (this.trail.length > this.maxTrailLength) {
+            this.trail.pop()
+          }
+        }
+
+        draw() {
+          // Draw trail
+          this.trail.forEach((pos, i) => {
+            const alpha = 1 - i / this.maxTrailLength
+            ctx.fillStyle = `rgba(0, 255, 255, ${alpha})`
+            ctx.fillRect(pos.x, pos.y, this.width, this.height)
+          })
+
+          // Draw player
+          ctx.fillStyle = '#0ff'
+          ctx.shadowBlur = 20
+          ctx.shadowColor = '#0ff'
+          ctx.fillRect(this.x, this.y, this.width, this.height)
+          ctx.shadowBlur = 0
+        }
+
+        checkCollision(wall) {
+          return (
+            this.x < wall.x + wall.width &&
+            this.x + this.width > wall.x &&
+            this.y < wall.y + wall.height &&
+            this.y + this.height > wall.y
+          )
+        }
+      }
+
+      class Wall {
+        constructor() {
+          this.width = Math.random() * 200 + 100
+          this.height = 20
+          this.x = Math.random() * (canvas.width - this.width)
+          this.y = -this.height
+        }
+
+        update() {
+          this.y += speed
+        }
+
+        draw() {
+          ctx.fillStyle = '#f0f'
+          ctx.shadowBlur = 20
+          ctx.shadowColor = '#f0f'
+          ctx.fillRect(this.x, this.y, this.width, this.height)
+          ctx.shadowBlur = 0
+        }
+      }
+
+      let player = new Player()
+      const keys = {}
+
+      // Input handlers
+      document.addEventListener('keydown', (e) => {
+        keys[e.key] = true
+        if (e.key === ' ') {
+          if (gameState === 'start') startGame()
+          if (gameState === 'gameover') resetGame()
+        }
+      })
+      document.addEventListener('keyup', (e) => (keys[e.key] = false))
+
+      // Touch controls
+      const touchLeft = document.getElementById('touchLeft')
+      const touchRight = document.getElementById('touchRight')
+
+      touchLeft.addEventListener('touchstart', () => (keys['ArrowLeft'] = true))
+      touchLeft.addEventListener('touchend', () => (keys['ArrowLeft'] = false))
+      touchRight.addEventListener(
+        'touchstart',
+        () => (keys['ArrowRight'] = true)
+      )
+      touchRight.addEventListener(
+        'touchend',
+        () => (keys['ArrowRight'] = false)
+      )
+
+      function startGame() {
+        gameState = 'playing'
+        startScreen.style.display = 'none'
+        resetGame()
+        // Initialize Farcade SDK
+        window.FarcadeSDK.singlePlayer.actions.ready()
+      }
+
+      function resetGame() {
+        player = new Player()
+        walls = []
+        score = 0
+        speed = 5
+        gameState = 'playing'
+        gameOverScreen.style.display = 'none'
+      }
+
+      function gameOver() {
+        gameState = 'gameover'
+        gameOverScreen.style.display = 'block'
+        finalScoreDisplay.textContent = Math.floor(score)
+        // Report score to Farcade SDK
+        window.FarcadeSDK.singlePlayer.actions.gameOver({
+          score: Math.floor(score),
+        })
+      }
+
+      function update() {
+        if (gameState !== 'playing') return
+
+        player.update()
+
+        // Spawn new walls
+        if (Math.random() < 0.02) {
+          walls.push(new Wall())
+        }
+
+        // Update walls
+        for (let i = walls.length - 1; i >= 0; i--) {
+          walls[i].update()
+
+          // Check collision
+          if (player.checkCollision(walls[i])) {
+            gameOver()
+            return
+          }
+
+          // Remove off-screen walls
+          if (walls[i].y > canvas.height) {
+            walls.splice(i, 1)
+          }
+        }
+
+        // Increase score and speed
+        score += 0.1
+        speed = 5 + Math.floor(score / 100)
+
+        scoreDisplay.textContent = Math.floor(score)
+      }
+
+      function draw() {
+        // Clear canvas with fade effect
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+        // Draw grid effect
+        ctx.strokeStyle = 'rgba(0, 255, 255, 0.1)'
+        const gridSize = 40
+        for (let i = 0; i < canvas.width; i += gridSize) {
+          ctx.beginPath()
+          ctx.moveTo(i, 0)
+          ctx.lineTo(i, canvas.height)
+          ctx.stroke()
+        }
+
+        walls.forEach((wall) => wall.draw())
+        player.draw()
+      }
+
+      function gameLoop() {
+        update()
+        draw()
+        requestAnimationFrame(gameLoop)
+      }
+
+      // Handle window resize
+      function resizeCanvas() {
+        const container = document.querySelector('.game-container')
+        const rect = container.getBoundingClientRect()
+        canvas.style.width = `${rect.width}px`
+        canvas.style.height = `${rect.height}px`
+      }
+
+      window.addEventListener('resize', resizeCanvas)
+      resizeCanvas()
+
+      // Start game loop
+      gameLoop()
+    </script>
   </body>
 </html>
