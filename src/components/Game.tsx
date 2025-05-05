@@ -141,16 +141,15 @@ const Game: React.FC = () => {
     }));
   }, [gameState.status, gameState.speed]);
 
-  // Game loop - updated for touching tiles instead of avoiding them
+  // Game loop - updated for consistent scoring and missed tiles tracking
   const gameLoop = useCallback(() => {
     if (gameState.status !== "playing") return;
     
     setGameState(prev => {
-      // Update score (only for basic time survived)
-      const newScore = prev.score + 1;
-      
       // Process obstacles and check for collisions (which now means successful touches)
-      let scoreBonus = 0;
+      let touchedInThisFrame = 0;
+      let missedInThisFrame = 0;
+      
       const updatedObstacles = prev.obstacles.map(obstacle => {
         // Check if this obstacle is being touched now
         const isTouched = 
@@ -160,39 +159,40 @@ const Game: React.FC = () => {
           obstacle.position === prev.playerPosition; // Must be in same lane
         
         if (isTouched) {
-          // Add points when touching an obstacle
-          scoreBonus += 10;
+          // Count touched obstacles in this frame
+          touchedInThisFrame++;
         }
         
-        // Move obstacle down - slowed down the rate by using a smaller speed multiplier
+        // Move obstacle down - very slow movement
         return {
           ...obstacle,
-          distance: obstacle.distance + prev.speed * 0.2, // Reduced from 0.3 to 0.2 for slower descent
+          distance: obstacle.distance + prev.speed * 0.2, // Very slow descent
           touched: obstacle.touched || isTouched
         };
       });
       
+      // Check for obstacles that have gone off-screen without being touched
+      const offScreenObstacles = updatedObstacles.filter(o => o.distance >= 110);
+      const missedObstacles = offScreenObstacles.filter(o => !o.touched);
+      missedInThisFrame = missedObstacles.length;
+      
       // Remove obstacles that are off-screen at bottom
       const filteredObstacles = updatedObstacles.filter(obstacle => obstacle.distance < 110);
       
-      // Count missed tiles (tiles that went offscreen without being touched)
-      const missedTiles = prev.obstacles.length - updatedObstacles.length - 
-        (updatedObstacles.filter(o => o.distance >= 110 && o.touched).length);
+      // Update the missed tiles counter
+      const newMissedTiles = prev.missedTiles + missedInThisFrame;
       
-      // End game if too many tiles were missed
-      if (missedTiles >= 5) {
+      // End game if too many tiles were missed (20 tiles)
+      if (newMissedTiles >= 20) {
         setTimeout(endGame, 0);
-        return {
-          ...prev,
-          obstacles: filteredObstacles,
-          score: newScore + scoreBonus
-        };
       }
       
+      // Increment score by the number of obstacles touched in this frame
       return {
         ...prev,
         obstacles: filteredObstacles,
-        score: newScore + scoreBonus
+        score: prev.score + touchedInThisFrame,
+        missedTiles: newMissedTiles
       };
     });
     
@@ -222,9 +222,12 @@ const Game: React.FC = () => {
       <div className="lane left-1/3"></div>
       <div className="lane left-2/3"></div>
       
-      {/* Score display */}
+      {/* Score display - updated to show both score and missed tiles */}
       <div className="score-display">
-        <span>SCORE: {formatScore(gameState.score)}</span>
+        <div className="flex flex-col items-end">
+          <span>SCORE: {formatScore(gameState.score)}</span>
+          <span className="text-red-300 text-sm">MISSED: {gameState.missedTiles}/20</span>
+        </div>
       </div>
       
       {/* Player */}
@@ -273,9 +276,10 @@ const Game: React.FC = () => {
         </div>
       )}
       
-      {/* Game over screen */}
+      {/* Game over screen - updated to show both score and missed tiles */}
       <GameOver 
         score={gameState.score}
+        missedTiles={gameState.missedTiles}
         onRestart={startGame}
         show={gameState.status === "game-over"}
       />

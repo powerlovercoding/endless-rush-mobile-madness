@@ -16,6 +16,7 @@ export interface Obstacle {
 export interface GameState {
   status: GameStatus;
   score: number;
+  missedTiles: number; // New counter for missed tiles
   speed: number;
   playerPosition: Position;
   playerState: PlayerState;
@@ -26,7 +27,8 @@ export interface GameState {
 export const INITIAL_GAME_STATE: GameState = {
   status: "ready",
   score: 0,
-  speed: 2, // Reduced base speed from 5 to 2 to make obstacles come down slower
+  missedTiles: 0, // Initialize missed tiles counter
+  speed: 1, // Reduced base speed to make obstacles come down very slowly
   playerPosition: "center",
   playerState: "running",
   obstacles: [],
@@ -76,7 +78,7 @@ export const checkCollision = (
   return false;
 };
 
-// Calculate obstacle generation rate - fixed rate without difficulty scaling
+// Calculate obstacle generation rate - very slow fixed rate
 export const calculateObstacleRate = (): number => {
-  return 1800; // Slower fixed rate for obstacle generation (1.8 seconds between obstacles)
+  return 3000; // Slower fixed rate for obstacle generation (3 seconds between obstacles)
 };
