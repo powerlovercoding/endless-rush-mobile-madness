@@ -130,7 +130,7 @@
   }
 
   .obstacle {
-    @apply absolute z-5 transition-all ease-linear;
+    @apply absolute z-[5] transition-all ease-linear;
   }
 
   .score-display {
